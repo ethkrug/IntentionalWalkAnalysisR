@@ -1,0 +1,191 @@
+---
+title: "Intentional Walks"
+author: "Ethan Kruger"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+after_walk <- read_excel("/Users/owner/Desktop/Intentional Walks/ibb2024(2).xlsx")
+no_walk <- read_excel("/Users/owner/Desktop/Intentional Walks/non-ibb2024(2).xlsx")
+```
+
+## Data Processing
+```{r}
+after_walk = after_walk %>%
+  mutate(total_bases = H + H2 + (2 * H3) + (3 * HR), OBP = (H + BB + HBP)/(AB + BB + HBP + SF)) %>%
+  mutate(ID = row_number())
+
+no_walk = no_walk %>%
+  mutate(total_bases = H + H2 + (2 * H3) + (3 * HR), OBP = (H + BB + HBP)/(AB + BB + HBP + SF)) %>%
+  mutate(ID = row_number())
+```
+
+## Slugging Percentage Testing
+```{r}
+slug_after_walk <- after_walk %>%
+  filter(AB != 0)
+
+slug_no_walk <- no_walk %>%
+  filter(AB != 0)
+
+print(paste("Slugging percentage for at-bats following an intentional walk:", format(round(mean(slug_after_walk$total_bases), 3), nsmall = 3)))
+print(paste("Slugging percentage for all other at-bats:", format(round(mean(slug_no_walk$total_bases), 3), nsmall = 3)))
+```
+
+```{r}
+slug_t_test_result <- t.test(slug_after_walk$total_bases, slug_no_walk$total_bases, alternative = "greater")
+slug_t_test_result
+```
+
+## OBP testing
+```{r}
+OBP_after_walk <- after_walk %>%
+  filter(!is.nan(OBP))
+
+OBP_no_walk <- no_walk %>%
+  filter(!is.nan(OBP))
+
+print(paste("On-base percentage for at-bats following an intentional walk:", format(round(mean(OBP_after_walk$OBP), 3), nsmall = 3)))
+print(paste("On-base percentage for all other at-bats:", format(round(mean(OBP_no_walk$OBP), 3), nsmall = 3)))
+```
+
+```{r}
+OBP_t_test_result <- t.test(OBP_after_walk$OBP, OBP_no_walk$OBP, alternative = "greater")
+OBP_t_test_result
+```
+
+## OPS Testing
+```{r}
+calculate_group_metrics <- function(data) {
+  # Total metrics
+  total_H <- sum(data$H, na.rm = TRUE)
+  total_BB <- sum(data$BB, na.rm = TRUE)
+  total_HBP <- sum(data$HBP, na.rm = TRUE)
+  total_AB <- sum(data$AB, na.rm = TRUE)
+  total_SF <- sum(data$SF, na.rm = TRUE)
+  total_H2 <- sum(data$H2, na.rm = TRUE)
+  total_H3 <- sum(data$H3, na.rm = TRUE)
+  total_HR <- sum(data$HR, na.rm = TRUE)
+  
+  # Total bases calculation
+  total_bases <- (total_H - total_H2 - total_H3 - total_HR) + (2 * total_H2) + (3 * total_H3) + (4 * total_HR)
+  
+  # Calculate OBP
+  group_OBP <- (total_H + total_BB + total_HBP) / (total_AB + total_BB + total_HBP + total_SF)
+  
+  # Calculate SLG
+  group_SLG <- total_bases / total_AB
+  
+  # Calculate group-level OPS
+  group_OPS <- group_OBP + group_SLG
+  
+  return(list(OBP = group_OBP, SLG = group_SLG, OPS = group_OPS))
+}
+
+# Apply the function to both groups
+group1_metrics <- calculate_group_metrics(after_walk)
+group2_metrics <- calculate_group_metrics(no_walk)
+
+print(paste("OPS for at-bats following an intentional walk:", format(round(mean(group1_metrics$OPS), 3), nsmall = 3)))
+
+print(paste("OPS for all other at-bats:", format(round(mean(group2_metrics$OPS), 3), nsmall = 3)))
+```
+
+```{r}
+library(ggplot2)
+
+# Combine group metrics into a data frame for visualization
+group_metrics <- data.frame(
+  Metric = rep(c("OBP", "SLG", "OPS"), 2),
+  Value = c(group1_metrics$OBP, group1_metrics$SLG, group1_metrics$OPS,
+            group2_metrics$OBP, group2_metrics$SLG, group2_metrics$OPS),
+  Group = rep(c("After Intent. Walk", "Not Following Intent. Walk"), each = 3)
+)
+
+group_metrics$Metric <- factor(group_metrics$Metric, levels = c("OBP", "SLG", "OPS"))
+
+# Create a bar plot
+ggplot(group_metrics, aes(x = Metric, y = Value, fill = Group)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(
+    title = "Metrics of hitters following intentional walks vs. other plate appearances",
+    x = "Metric",
+    y = "Value"
+  ) +
+  theme_minimal() 
+```
+
+## Runs Created
+```{r}
+RC_after_walk <- after_walk %>%
+  mutate(RC = (total_bases * (H + BB))/ (AB + BB)) %>%
+  na.omit()
+
+RC_no_walk <- no_walk %>%
+  mutate(RC = (total_bases * (H + BB))/ (AB + BB)) %>%
+  na.omit()
+
+print(paste("Runs Created for at-bats following an intentional walk:", format(round(mean(RC_after_walk$RC), 3), nsmall = 3)))
+
+print(paste("Runs Created for all other at-bats:", format(round(mean(RC_no_walk$RC), 3), nsmall = 3)))
+```
+
+```{r}
+RC_t_test_result <- t.test(RC_after_walk$RC, RC_no_walk$RC, alternative = "greater")
+RC_t_test_result
+```
+
+```{r}
+# Create a bar plot
+RC_dataframe <- data.frame(
+  Metric = c("After Intentional Walk", "Other At-bats"),
+  Value = c(mean(RC_after_walk$RC), mean(RC_no_walk$RC)))
+
+ggplot(RC_dataframe, aes(x = Metric, y = Value, fill = Metric)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(
+    title = "Metrics of hitters following intentional walks vs. other plate appearances",
+    x = "Metric",
+    y = "Value"
+  ) +
+  scale_y_continuous(limits = c(0, max(RC_dataframe$Value) + 0.1)) +
+  scale_fill_hue() +
+  theme_minimal() 
+```
+
+## Plate Appearances per Home Run
+```{r}
+HRPA_after_walk <- 1/mean(after_walk$HR)
+HRPA_no_walk <- 1/mean(no_walk$HR)
+
+print(paste("At-bats per home run following an intentional walk:", format(round(1/mean(after_walk$HR), 2), nsmall = 2)))
+
+print(paste("At-bats per home run for all other at-bats:", format(round(1/mean(no_walk$HR), 2), nsmall = 2)))
+```
+
+```{r}
+HR_t_test_result <- t.test(after_walk$HR, no_walk$HR)
+HR_t_test_result
+```
+
+## Plate Appearances per Strikeout
+```{r}
+print(paste("At-bats per strikeout following an intentional walk:", format(round(1/mean(after_walk$K), 3), nsmall = 3)))
+
+print(paste("At-bats per strikeout for all other at-bats:", format(round(1/mean(no_walk$K), 3), nsmall = 3)))
+```
+
+```{r}
+K_t_test_result <- t.test(after_walk$K, no_walk$K, alternative = "less")
+K_t_test_result
+```
+
