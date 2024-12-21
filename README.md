@@ -1,6 +1,7 @@
 # IntentionalWalkAnalysisR
 
-This project explored the impact of an intentional walk on the subsequent hitter’s plate appearance in Major League Baseball (MLB). Performance of players who batted immediately following intentional walks was analyzed and compared to those who did not follow an intentional walk during the 2024 MLB season.
+This project explored the impact of an intentional walk on the subsequent hitter’s plate appearance in Major League Baseball (MLB). 
+Performance of players who batted immediately following intentional walks was analyzed and compared to those who did not follow an intentional walk during the 2024 MLB season.
 The analysis aimed to provide insight into the psychological impact of an intentional walk. The act of a team deliberately avoiding one hitter in favor of facing the next can serve as significant motivation for the second hitter. The statistical differences in performance between these hitters and those not batting after an intentional walk were used to quantify this potential psychological effect.
 
 **Metrics Analyzed**
