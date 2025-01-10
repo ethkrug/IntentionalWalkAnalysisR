@@ -148,15 +148,15 @@ RC_t_test_result
 ```{r}
 # Create a bar plot
 RC_dataframe <- data.frame(
-  Metric = c("After Intentional Walk", "Other At-bats"),
+  Group = c("After Intentional Walk", "Other At-bats"),
   Value = c(mean(RC_after_walk$RC), mean(RC_no_walk$RC)))
 
-ggplot(RC_dataframe, aes(x = Metric, y = Value, fill = Metric)) +
+ggplot(RC_dataframe, aes(x = Group, y = Value, fill = Group)) +
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(
-    title = "Metrics of hitters following intentional walks vs. other plate appearances",
-    x = "Metric",
-    y = "Value"
+    title = "Runs Created for hitters following intentional walks vs. other plate appearances",
+    x = "Group",
+    y = "Runs Created"
   ) +
   scale_y_continuous(limits = c(0, max(RC_dataframe$Value) + 0.1)) +
   scale_fill_hue() +
