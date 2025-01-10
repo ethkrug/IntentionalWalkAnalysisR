@@ -173,10 +173,6 @@ print(paste("At-bats per home run following an intentional walk:", format(round(
 print(paste("At-bats per home run for all other at-bats:", format(round(1/mean(no_walk$HR), 2), nsmall = 2)))
 ```
 
-```{r}
-HR_t_test_result <- t.test(after_walk$HR, no_walk$HR)
-HR_t_test_result
-```
 
 ## Plate Appearances per Strikeout
 ```{r}
@@ -186,6 +182,7 @@ print(paste("At-bats per strikeout for all other at-bats:", format(round(1/mean(
 ```
 
 ```{r}
+print("T Test based on strikeouts per at-bat")
 K_t_test_result <- t.test(after_walk$K, no_walk$K, alternative = "less")
 K_t_test_result
 ```
